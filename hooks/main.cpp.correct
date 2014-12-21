@@ -1,0 +1,13 @@
+#include <iostream>
+
+void doThing1() {
+    std::cout << "Hello, world!" << std::endl;
+}
+
+void doThing2() {
+    std::cout << "I <3 git" << std::endl;
+}
+
+int main() {
+    doThing2();
+}

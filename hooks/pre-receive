@@ -1,0 +1,82 @@
+#!/bin/bash
+set -euo pipefail
+
+print_hr()
+{
+    echo "--------------------------------------------------------------------------------"
+}
+print_begin()
+{
+    echo "BEGIN AUTOGRADER OUTPUT"
+    print_hr
+}
+print_end()
+{
+    print_hr
+    echo "END AUTOGRADER OUTPUT"
+}
+print_begin
+trap print_end EXIT
+
+line=""
+while read stdin_line; do
+    if [[ -z "$line" ]]; then
+        line="$stdin_line"
+    else
+        echo "ERROR: More than one target ref received."
+        exit 1
+    fi
+done
+
+args=( $line )
+commit_id=${args[1]}
+ref=${args[2]}
+
+if [[ "$ref" != "refs/heads/master" ]]; then
+    echo "ERROR: Tried to push to ref '$ref' instead of branch 'master'."
+    exit 1
+fi
+
+# Set -e will cause this to exit 1 if it fails.
+if ! diff -w <(git show "$commit_id:main.cpp") hooks/main.cpp.correct >/dev/null; then
+    echo \
+"Oh no, you didn't have the right commit contents! Here's the diff (what we want
+is on the left, and what you had is on the right):"
+    echo ""
+    diff -wy hooks/main.cpp.correct <(git show "$commit_id:main.cpp")
+fi
+
+author_email=$(git --no-pager show -s --format='%ae' $commit_id)
+author_name=$(git --no-pager show -s --format='%an' $commit_id)
+author_first_name=$(cut -d' ' -f1 <<<"$author_name")
+uniqname=$(cut -d'@' -f1 <<<"$author_email")
+domain=$(cut -d'@' -f2 <<<"$author_email")
+
+if [[ -z "$author_email" ]]; then
+    echo \
+"Oh no, you haven't set your email address in git! Please set your email address
+and try pushing again."
+    exit 1
+fi
+
+if [[ "$domain" != "umich.edu" ]]; then
+    if [[ ! -z "$author_first_name" ]]; then
+        greeting="Hi, $author_first_name"
+    else
+        greeting="Hi"
+    fi
+    echo \
+"$greeting! I see your email is '$author_email', but we need to have
+your umich email so that we can give you points! Please update your git
+configuration to have your correct email.
+
+After you've updated your configuration, run 'git commit --amend' to update
+your email address, and then try pushing again.
+
+(Of course, since this is a demo, we'll accept your submission anyways. We've
+logged the email address $author_email to a file.)"
+else
+    echo "Hi, $author_name! We'll mark your submission as received for: $uniqname."
+fi
+
+echo "$author_email $commit_id" >>received_commits

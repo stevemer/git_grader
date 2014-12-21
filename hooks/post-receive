@@ -1,0 +1,15 @@
+#!/bin/bash
+line=""
+while read stdin_line; do
+    if [[ -z "$line" ]]; then
+        line="$stdin_line"
+    else
+        echo "ERROR: More than one target ref received."
+        exit 1
+    fi
+done
+
+args=( $line )
+revert_commit_id=${args[0]}
+
+git update-ref HEAD "$revert_commit_id"

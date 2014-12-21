@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+	logallrefupdates = true
+	ignorecase = true
+	precomposeunicode = true
+[daemon]
+	receivepack = true
